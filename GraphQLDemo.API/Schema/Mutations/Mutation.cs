@@ -1,22 +1,39 @@
-﻿using GraphQLDemo.API.Schema.Queries;
+﻿using GraphQLDemo.API.DTOs;
+using GraphQLDemo.API.Schema.Queries;
 using GraphQLDemo.API.Schema.Subscriptions;
+using GraphQLDemo.API.Services.Courses;
 using HotChocolate.Subscriptions;
 
 namespace GraphQLDemo.API.Schema.Mutations
 {
     public class Mutation
     {
-        private readonly List<CourseResult> _courses;
-        public Mutation()
+        private readonly CoursesRepository _coursesRepository;
+        public Mutation(CoursesRepository coursesRepository)
         {
-            _courses = new List<CourseResult>();
+           _coursesRepository = coursesRepository;
         }
 
-        public async Task<CourseResult> CreateCourse(CourseInputType courseInput,
+        public async Task<CourseDTO> CreateCourse(CourseInputType courseInput,
             [Service] ITopicEventSender topicEventSender)
         {
+            CourseDTO course = new()
+            {
+                Name = courseInput.Name,
+                Subject = courseInput.Subject,
+                InstructorId = courseInput.InstructorId
+            };
+            var courseReturn = await _coursesRepository.Create(course);
 
-            CourseResult course = new()
+            await topicEventSender.SendAsync(nameof(Subscription.CourseCreated), course);
+
+            return courseReturn;
+        }
+
+        public async Task<CourseDTO> UpdateCourse(Guid id, CourseInputType courseInput,
+            [Service] ITopicEventSender topicEventSender)
+        {
+            CourseDTO course = new()
             {
                 Id = Guid.NewGuid(),
                 Name = courseInput.Name,
@@ -24,36 +41,15 @@ namespace GraphQLDemo.API.Schema.Mutations
                 InstructorId = courseInput.InstructorId
             };
 
-            _courses.Add(course);
-
-            await topicEventSender.SendAsync(nameof(Subscription.CourseCreated), course);
-
-            return course;
-        }
-
-        public async Task<CourseResult> UpdateCourse(Guid id, CourseInputType courseInput,
-            [Service] ITopicEventSender topicEventSender)
-        {
-            var course = _courses.FirstOrDefault(c => c.Id == id);
-
-            if (course is null)
-            {
-                throw new GraphQLException("Course not found");
-            }
-
-            course.Name = courseInput.Name;
-            course.Subject = courseInput.Subject;
-            course.InstructorId = courseInput.InstructorId;
+            var returnCourse = await _coursesRepository.Update(course);
 
             //string updateCourseTopic = $"{course.Id}_{nameof(Subscription.CourseUpdated)}";
             //await topicEventSender.SendAsync(updateCourseTopic, course);
 
-            return course;
+            return returnCourse;
         }
 
-        public bool DeleteCourse(Guid id)
-        {
-            return _courses.RemoveAll(c => c.Id == id) >= 1; 
-        }
+        public async Task<bool> DeleteCourse(Guid id)
+            => await _coursesRepository.Delete(id);
     }
 }
