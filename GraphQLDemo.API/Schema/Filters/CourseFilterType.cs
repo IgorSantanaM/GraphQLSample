@@ -1,7 +1,7 @@
 ﻿using GraphQLDemo.API.Schema.Queries;
 using HotChocolate.Data.Filters;
 
-namespace GraphQLDemo.API.Filters
+namespace GraphQLDemo.API.Schema.Filters
 {
     public class CourseFilterType : FilterInputType<CourseType>
     {

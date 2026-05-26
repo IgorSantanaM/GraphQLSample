@@ -1,3 +1,5 @@
+using FirebaseAdmin;
+using FirebaseAdminAuthentication.DependencyInjection.Extensions;
 using GraphQLDemo.API.DataLoaders;
 using GraphQLDemo.API.Schema.Mutations;
 using GraphQLDemo.API.Schema.Queries;
@@ -14,7 +16,15 @@ builder.Services.AddGraphQLServer()
     .AddMutationType<Mutation>()
     .AddSubscriptionType<Subscription>()
     .AddInMemorySubscriptions()
-    .AddFiltering();
+    .AddFiltering()
+    .AddSorting()
+    .AddProjections()
+    .AddAuthorization();
+
+
+builder.Services.AddSingleton(FirebaseApp.Create());
+builder.Services.AddFirebaseAuthentication();
+
 
 string connectionString = builder.Configuration.GetConnectionString("default")!;
 
@@ -32,6 +42,7 @@ using (var scope = app.Services.CreateScope())
     dbContext.Database.Migrate();
 }
 
+app.UseAuthentication();
 app.UseWebSockets();
 app.MapGet("/", () => "Hello World!");
 
