@@ -1,6 +1,7 @@
 ﻿using Bogus;
 using GraphQLDemo.API.DTOs;
-using GraphQLDemo.API.Filters;
+using GraphQLDemo.API.Schema.Filters;
+using GraphQLDemo.API.Schema.Sorters;
 using GraphQLDemo.API.Services;
 using GraphQLDemo.API.Services.Courses;
 
@@ -28,7 +29,9 @@ namespace GraphQLDemo.API.Schema.Queries
             });
         }
         [UsePaging(IncludeTotalCount = true, DefaultPageSize = 10)]
+        [UseProjection]
         [UseFiltering(typeof(CourseFilterType))]
+        [UseSorting(typeof(CourseSortType))]
         public IQueryable<CourseType> GetPaginatedCourses([Service] SchoolDbContext context)
         {
             return context.Courses.Select(c => new CourseType()
