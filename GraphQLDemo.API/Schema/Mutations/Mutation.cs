@@ -1,8 +1,10 @@
-﻿using GraphQLDemo.API.DTOs;
-using GraphQLDemo.API.Schema.Queries;
+﻿using FirebaseAdminAuthentication.DependencyInjection.Models;
+using GraphQLDemo.API.DTOs;
 using GraphQLDemo.API.Schema.Subscriptions;
 using GraphQLDemo.API.Services.Courses;
+using HotChocolate.Authorization;
 using HotChocolate.Subscriptions;
+using System.Security.Claims;
 
 namespace GraphQLDemo.API.Schema.Mutations
 {
@@ -11,12 +13,17 @@ namespace GraphQLDemo.API.Schema.Mutations
         private readonly CoursesRepository _coursesRepository;
         public Mutation(CoursesRepository coursesRepository)
         {
-           _coursesRepository = coursesRepository;
+            _coursesRepository = coursesRepository;
         }
 
+        [Authorize]
         public async Task<CourseDTO> CreateCourse(CourseInputType courseInput,
-            [Service] ITopicEventSender topicEventSender)
+            [Service] ITopicEventSender topicEventSender,
+            ClaimsPrincipal claimsPrincipal)
         {
+            var userId = claimsPrincipal.FindFirstValue(FirebaseUserClaimType.ID);
+            var email = claimsPrincipal.FindFirstValue(FirebaseUserClaimType.EMAIL);
+            var username = claimsPrincipal.FindFirstValue(FirebaseUserClaimType.USERNAME);
             CourseDTO course = new()
             {
                 Name = courseInput.Name,
@@ -30,6 +37,7 @@ namespace GraphQLDemo.API.Schema.Mutations
             return courseReturn;
         }
 
+        [Authorize]
         public async Task<CourseDTO> UpdateCourse(Guid id, CourseInputType courseInput,
             [Service] ITopicEventSender topicEventSender)
         {
@@ -49,6 +57,7 @@ namespace GraphQLDemo.API.Schema.Mutations
             return returnCourse;
         }
 
+        [Authorize]
         public async Task<bool> DeleteCourse(Guid id)
             => await _coursesRepository.Delete(id);
     }
