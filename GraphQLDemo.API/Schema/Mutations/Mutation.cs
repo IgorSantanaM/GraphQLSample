@@ -28,7 +28,8 @@ namespace GraphQLDemo.API.Schema.Mutations
             {
                 Name = courseInput.Name,
                 Subject = courseInput.Subject,
-                InstructorId = courseInput.InstructorId
+                InstructorId = courseInput.InstructorId,
+                CreatorId = userId!
             };
             var courseReturn = await _coursesRepository.Create(course);
 
@@ -39,17 +40,22 @@ namespace GraphQLDemo.API.Schema.Mutations
 
         [Authorize]
         public async Task<CourseDTO> UpdateCourse(Guid id, CourseInputType courseInput,
-            [Service] ITopicEventSender topicEventSender)
+            [Service] ITopicEventSender topicEventSender, ClaimsPrincipal claimsPrincipal)
         {
-            CourseDTO course = new()
-            {
-                Id = Guid.NewGuid(),
-                Name = courseInput.Name,
-                Subject = courseInput.Subject,
-                InstructorId = courseInput.InstructorId
-            };
+            var userId = claimsPrincipal.FindFirstValue(FirebaseUserClaimType.ID);
 
-            var returnCourse = await _coursesRepository.Update(course);
+            var currentCourse = await _coursesRepository.GetById(id);
+            if (currentCourse is null)
+                throw new GraphQLException("Course not found");
+
+            if (currentCourse.CreatorId != userId)
+                throw new GraphQLException("You do not have permission to update this course");
+
+            currentCourse.Name = courseInput.Name;
+            currentCourse.Subject = courseInput.Subject;
+            currentCourse.InstructorId = courseInput.InstructorId;
+
+            var returnCourse = await _coursesRepository.Update(currentCourse);
 
             //string updateCourseTopic = $"{course.Id}_{nameof(Subscription.CourseUpdated)}";
             //await topicEventSender.SendAsync(updateCourseTopic, course);
@@ -57,7 +63,7 @@ namespace GraphQLDemo.API.Schema.Mutations
             return returnCourse;
         }
 
-        [Authorize]
+        [Authorize(Policy = "IsAdmin")]
         public async Task<bool> DeleteCourse(Guid id)
             => await _coursesRepository.Delete(id);
     }

@@ -1,5 +1,7 @@
-﻿using GraphQLDemo.API.DataLoaders;
+﻿using FirebaseAdmin.Auth;
+using GraphQLDemo.API.DataLoaders;
 using GraphQLDemo.API.Services.Instructors;
+using System.Reflection.Metadata.Ecma335;
 
 namespace GraphQLDemo.API.Schema.Queries
 {
@@ -29,7 +31,15 @@ namespace GraphQLDemo.API.Schema.Queries
                 Salary = instructorDto.Salary,
             };
         }
-
         public IEnumerable<StudentType>? Students { get; set; }
+        [IsProjected(true)]
+        public string? CreatorId { get; set; }
+        public async Task<UserType?> Creator([Service] UserDataLoader userDataLoader)
+        {
+            if (CreatorId is null)
+                return null!;
+
+            return await userDataLoader.LoadAsync(CreatorId, CancellationToken.None);
+        }
     }
 }
