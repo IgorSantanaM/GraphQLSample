@@ -1,5 +1,7 @@
 ﻿using FirebaseAdminAuthentication.DependencyInjection.Models;
 using GraphQLDemo.API.DTOs;
+using GraphQLDemo.API.Middlewares.UseUser;
+using GraphQLDemo.API.Schema.Queries;
 using GraphQLDemo.API.Schema.Subscriptions;
 using GraphQLDemo.API.Services.Courses;
 using HotChocolate.Authorization;
@@ -17,13 +19,14 @@ namespace GraphQLDemo.API.Schema.Mutations
         }
 
         [Authorize]
+        [UseUser]
         public async Task<CourseDTO> CreateCourse(CourseInputType courseInput,
             [Service] ITopicEventSender topicEventSender,
-            ClaimsPrincipal claimsPrincipal)
+            [GlobalState] User user)
         {
-            var userId = claimsPrincipal.FindFirstValue(FirebaseUserClaimType.ID);
-            var email = claimsPrincipal.FindFirstValue(FirebaseUserClaimType.EMAIL);
-            var username = claimsPrincipal.FindFirstValue(FirebaseUserClaimType.USERNAME);
+            var userId = user.Id;
+            var email = user.Email;
+            var username = user.Username;
             CourseDTO course = new()
             {
                 Name = courseInput.Name,
@@ -39,10 +42,12 @@ namespace GraphQLDemo.API.Schema.Mutations
         }
 
         [Authorize]
+        [UseUser]
+
         public async Task<CourseDTO> UpdateCourse(Guid id, CourseInputType courseInput,
-            [Service] ITopicEventSender topicEventSender, ClaimsPrincipal claimsPrincipal)
+            [Service] ITopicEventSender topicEventSender, [GlobalState] User user)
         {
-            var userId = claimsPrincipal.FindFirstValue(FirebaseUserClaimType.ID);
+            var userId = user.Id;
 
             var currentCourse = await _coursesRepository.GetById(id);
             if (currentCourse is null)
