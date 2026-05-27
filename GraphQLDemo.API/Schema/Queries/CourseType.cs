@@ -12,7 +12,7 @@ namespace GraphQLDemo.API.Schema.Queries
         History
     }
 
-    public class CourseType
+    public class CourseType : ISearchResultType
     {
         public Guid Id { get; set; }
         public string? Name { get; set; }
