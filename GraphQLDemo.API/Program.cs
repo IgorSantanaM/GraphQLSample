@@ -2,6 +2,7 @@ using FirebaseAdmin;
 using FirebaseAdminAuthentication.DependencyInjection.Extensions;
 using FirebaseAdminAuthentication.DependencyInjection.Models;
 using GraphQLDemo.API.DataLoaders;
+using GraphQLDemo.API.Middlewares.UseUser;
 using GraphQLDemo.API.Schema.Mutations;
 using GraphQLDemo.API.Schema.Queries;
 using GraphQLDemo.API.Schema.Subscriptions;
@@ -49,7 +50,7 @@ using (var scope = app.Services.CreateScope())
 app.UseAuthentication();
 app.UseWebSockets();
 app.MapGet("/", () => "Hello World!");
-
+app.UseMiddleware<UserMiddleware>();
 app.MapGraphQL();
 
 app.Run();
